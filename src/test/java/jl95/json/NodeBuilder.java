@@ -1,8 +1,6 @@
 package jl95.json;
 
-import java.util.LinkedList;
-
-public class NodeBuilder extends GenericStreamBuilder<Node> {
+public class NodeBuilder extends Builder<Node> {
 
     public static Node build(String repr) {
         return new NodeBuilder(repr).build();

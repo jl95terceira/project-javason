@@ -52,7 +52,7 @@ public class StreamParser {
     }
     private static Set<Character>  ws             = setOf(' ','\t','\r','\n');
     private static Set<Character>  digits         = setOf('0','1','2','3','4','5','6','7','8','9','.');
-    private static Set<Character>  wordStarting   = setOf('t','f');
+    private static Set<Character>  wordStarting   = setOf('n','t','f');
     private static Set<Character>  wordChars      = setOf('n','u','l','l','t','r','u','e','f','a','l','s','e');
     private static List<EscapableCharMapping> escapableCharMappings = listOf(
         new EscapableCharMapping('\\', '\\'),
@@ -78,7 +78,6 @@ public class StreamParser {
         AFTER_KEY;
     }
     private enum StackValue {
-        ROOT,
         ARRAY,
         OBJECT;
     }
@@ -108,23 +107,22 @@ public class StreamParser {
     public void parse(String repr, Handlers handlers) {
         state     = State.BEFORE_VALUE;
         stack     = new LinkedList<>();
-        stack.add(StackValue.ROOT);
         left      = -1;
         this.handlers = handlers;
         int i = 0;
         while (true) {
+//            System.out.printf("%s :: %s\n", state, i);
             if (i >= repr.length()) {
+                if (state == State.AFTER_VALUE) {
+                    break;
+                }
+                if (!stack.isEmpty()) throw new RuntimeException("did not close parent");
                 switch (state) {
-                    case AFTER_VALUE:
-                        break;
                     case IN_NUMBER:
                         handlers.handleNumber(repr.substring(left));
                         break;
                     case IN_WORD:
                         handleWord(repr.substring(left));
-                        break;
-                    case IN_STRING:
-                        handlers.handleString(resolveStringWithinQuotes(repr.substring(left).substring(1, repr.length()-1)));
                         break;
                     default:
                         throw new RuntimeException("invalid");
@@ -132,7 +130,7 @@ public class StreamParser {
                 break;
             }
             char c = repr.charAt(i);
-            System.out.printf("%s :: %s :: %s\n", state, i, c);
+//            System.out.printf("    %s\n", c);
             switch (state) {
                 case BEFORE_VALUE:
                     if (digits.contains(c)) {
@@ -157,6 +155,10 @@ public class StreamParser {
                     }
                     else if (ws.contains(c)) {
                         /*pass*/
+                    }
+                    else if (c == ']' || c == '}') {
+                        state = State.AFTER_VALUE;
+                        continue;
                     }
                     else {
                         throw new RuntimeException("invalid starting character "+c);
@@ -219,22 +221,19 @@ public class StreamParser {
                               stack.getLast() == StackValue.OBJECT)) {
                             throw new RuntimeException("value / entry "+c+" separator not expected");
                         }
-                        state = stack.getLast() == StackValue.ARRAY? State.BEFORE_VALUE
-                                                                   : State.BEFORE_KEY;
+                        state = stack.getLast() == StackValue.ARRAY? State.BEFORE_VALUE: State.BEFORE_KEY;
                     }
                     else if (c == ']') {
                         if (stack.getLast() != StackValue.ARRAY) throw new RuntimeException("bad closing character "+c+" - not in array");
                         stack.removeLast();
                         handlers.handleArrayEnd();
-                        state = stack.getLast() == StackValue.ARRAY? State.BEFORE_VALUE
-                                                                   : State.BEFORE_KEY;
+                        state = State.AFTER_VALUE;
                     }
                     else if (c == '}') {
                         if (stack.getLast() != StackValue.OBJECT) throw new RuntimeException("bad closing character "+c+" - not in object");
                         stack.removeLast();
                         handlers.handleObjectEnd();
-                        state = stack.getLast() == StackValue.ARRAY? State.BEFORE_VALUE
-                                                                   : State.BEFORE_KEY;
+                        state = State.AFTER_VALUE;
                     }
                     else throw new RuntimeException("invalid character "+c+" after value");
                     left = i;

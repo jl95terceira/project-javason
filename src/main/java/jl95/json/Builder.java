@@ -2,22 +2,27 @@ package jl95.json;
 
 import java.util.LinkedList;
 
-public abstract class GenericStreamBuilder<N> {
+public abstract class Builder<N> {
 
     private final String        repr;
     private final LinkedList<N> stack    = new LinkedList<>();
+    private       N             root     = null;
     private       String        entryKey = null;
 
-    protected GenericStreamBuilder(String repr) {this.repr = repr;}
+    protected Builder(String repr) {this.repr = repr;}
 
     private void handleValue(N x) {
-        if (stack.isEmpty()) {
-            stack.add(x);
-            return;
+        if (root == null) {
+            root = x;
         }
-        N parent = stack.getLast();
-        if (entryKey == null) { addToArray (parent,           x); }
-        else                  { addToObject(parent, entryKey, x); }
+        else /* if we have a root already, the stack is guaranteed not to be empty */ {
+            N parent = stack.getLast();
+            if (entryKey == null) {
+                addToArray(parent, x);
+            } else {
+                addToObject(parent, entryKey, x);
+            }
+        }
         if (isArrayOrObject(x)) {
             stack.add(x);
         }
@@ -58,7 +63,7 @@ public abstract class GenericStreamBuilder<N> {
                 entryKey = k;
             }
         });
-        return stack.removeLast();
+        return root;
     }
 
     protected abstract N getNull  ();

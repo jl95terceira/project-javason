@@ -111,8 +111,20 @@ public class Node {
         }
     }
     
-    @Override public    String      toString() {
+    @Override public String  toString() {
         
         return String.format("Node(%s)", asObj());
+    }
+    @Override public boolean equals  (Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Node node = (Node) o;
+        return type() == node.type() &&
+               Objects.equals(asObj(), node.asObj());
+    }
+    @Override public int hashCode() {
+        return Objects.hash(type(), asObj());
     }
 }
