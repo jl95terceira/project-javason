@@ -25,7 +25,8 @@ public class StreamParser {
             this.toAsString     = ""     +to;
         }
     }
-    public  interface    Handlers {
+
+    public interface Handlers {
         void handleNull       ();
         void handleNumber     (String  nRepr);
         void handleString     (String  s);
@@ -81,12 +82,8 @@ public class StreamParser {
         ARRAY,
         OBJECT;
     }
-    
-    private State            state;
-    private Boolean          stateInObjectKey = false;
-    private LinkedList<StackValue> stack;
-    private int              left;
-    private Handlers         handlers;
+
+    private Handlers handlers;
 
     private String resolveStringWithinQuotes(String reprWithinQuotes) {
         for (EscapableCharMapping esc: escapableCharMappings) {
@@ -105,9 +102,10 @@ public class StreamParser {
     }
 
     public void parse(String repr, Handlers handlers) {
-        state     = State.BEFORE_VALUE;
-        stack     = new LinkedList<>();
-        left      = -1;
+        State state = State.BEFORE_VALUE;
+        Boolean stateInObjectKey = false;
+        LinkedList<StackValue> stack = new LinkedList<>();
+        int left = -1;
         this.handlers = handlers;
         int i = 0;
         while (true) {
@@ -193,7 +191,7 @@ public class StreamParser {
                         i++;
                     }
                     else {
-                        String s = resolveStringWithinQuotes(repr.substring(left+1, i));
+                        String s = resolveStringWithinQuotes(repr.substring(left +1, i));
                         if (!stateInObjectKey) {
                             handlers.handleString(s);
                             state = State.AFTER_VALUE;
