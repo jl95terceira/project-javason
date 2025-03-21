@@ -2,75 +2,57 @@ package jl95.json;
 
 import java.util.LinkedList;
 
-public class NodeBuilder {
+public class NodeBuilder extends GenericStreamBuilder<Node> {
 
     public static Node build(String repr) {
-        return new NodeBuilder(repr).exec();
+        return new NodeBuilder(repr).build();
     }
 
-    private final String           repr;
-    private final LinkedList<Node> stack    = new LinkedList<>();
-    private       String           entryKey = null;
+    private NodeBuilder(String repr) {super(repr);}
 
-    private NodeBuilder(String repr) {this.repr = repr;}
-
-    private void handleValue(Node x) {
-        if (stack.isEmpty()) {
-            stack.add(x);
-            return;
-        }
-        Node parent = stack.getLast();
-        if (entryKey == null) {
-            parent.add(x);
-        }
-        else {
-            parent.setItem(entryKey, x);
-        }
+    @Override
+    protected Node getNull() {
+        return Node.Null();
+    }
+    @Override
+    protected Node getTrue() {
+        return Node.Bool(true);
+    }
+    @Override
+    protected Node getFalse() {
+        return Node.Bool(false);
+    }
+    @Override
+    protected Node getNumber(String numberRepr) {
+        return Node.Int(Long.valueOf(numberRepr));
+    }
+    @Override
+    protected Node getString(String s) {
+        return Node.Str(s);
+    }
+    @Override
+    protected Node getArray() {
+        return Node.List();
+    }
+    @Override
+    protected Node getObject() {
+        return Node.Map();
+    }
+    @Override
+    protected Boolean isArrayOrObject(Node x) {
         switch (x.type()) {
-            case LIST:
-            case MAP:
-                stack.add(x);
-                break;
-            default:
-                break;
+        case LIST:
+        case MAP:
+            return true;
         }
+        return false;
     }
-
-    private Node exec() {
-
-        new StreamParser().parse(repr, new StreamParser.Handlers() {
-
-            @Override public void handleNull() {
-                handleValue(Node.Null());
-            }
-            @Override public void handleNumber(String nRepr) {
-                handleValue(Node.Int(Long.valueOf(nRepr)));
-            }
-            @Override public void handleString(String s) {
-                handleValue(Node.Str(s));
-            }
-            @Override public void handleTrue() {
-                handleValue(Node.Bool(true));
-            }
-            @Override public void handleFalse() {
-                handleValue(Node.Bool(false));
-            }
-            @Override public void handleArrayStart() {
-                handleValue(Node.List());
-            }
-            @Override public void handleArrayEnd() {
-                stack.removeLast();
-            }
-            @Override public void handleObjectStart() {
-                handleValue(Node.Map());
-            }
-            @Override public void handleObjectEnd() {
-                stack.removeLast();
-            }
-            @Override public void handleObjectKey(String k) {
-                entryKey = k;
-            }
-        });
-        return stack.removeLast();
+    @Override
+    protected void addToArray(Node array, Node v) {
+        array.add(v);
+    }
+    @Override
+    protected void addToObject(Node object, String k, Node v) {
+        object.setItem(k, v);
     }
 }
