@@ -6,6 +6,9 @@ public class ParserTest {
     public void testNumber() {
         org.junit.Assert.assertEquals   (Node.Int(4242).asInt(), new Parser().parse("4242").asInt());
         org.junit.Assert.assertNotEquals(Node.Int(4242).asInt(), new Parser().parse("2424").asInt());
+    }
+    @org.junit.Test
+    public void testNumberPadded() {
         org.junit.Assert.assertEquals   (Node.Int(4242).asInt(), new Parser().parse("     4242    ").asInt());
         try {
             new Parser().parse("42  42");
@@ -18,6 +21,9 @@ public class ParserTest {
         org.junit.Assert.assertEquals   (Node.Bool(true) .asBool(), new Parser().parse("true") .asBool());
         org.junit.Assert.assertNotEquals(Node.Bool(true) .asBool(), new Parser().parse("false").asBool());
         org.junit.Assert.assertEquals   (Node.Bool(false).asBool(), new Parser().parse("false").asBool());
+    }
+    @org.junit.Test
+    public void testBooleanPadded() {
         org.junit.Assert.assertEquals   (Node.Bool(true) .asBool(), new Parser().parse("     true    ").asBool());
         try {
             new Parser().parse("tr  ue");

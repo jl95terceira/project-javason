@@ -17,36 +17,62 @@ public class Parser {
     private static Set<Character> booleanChars    = setOf('t','r','u','e','f','a','l','s','e');
         
     private enum State {
-        INIT,
+        BEFORE,
         IN_NUMBER,
         IN_BOOLEAN,
         IN_STRING,
-        IN_ARRAY,
-        IN_OBJECT;
+        IN_STRING_ESCAPING,
+        AFTER;
     }
     
-    private State state = State.INIT;
-    private int   left  = -1;
+    private State state;
+    private int   left;
+    private LinkedList<Node> nodeStack;
+    private String entryKey;
+
+    private void handleNode(Node n) {
+        Node parent = nodeStack.getLast();
+        switch (parent.type()) {
+            case LIST:
+                parent.add(n);
+                break;
+            case MAP:
+                if (entryKey == null) {
+                    entryKey = n.asStr();
+                } else {
+                    parent.setItem(entryKey, n);
+                }
+                break;
+        }
+        state = State.AFTER;
+    }
 
     public Node parse(String repr) {
-        state = State.INIT;
-        left = -1;
+        state     = State.BEFORE;
+        left      = -1;
+        nodeStack = new LinkedList<>();
+        entryKey  = null;
         int i = 0;
         while (true) {
             if (i >= repr.length()) {
                 switch (state) {
-                    case IN_NUMBER : return Node.Int (Long   .valueOf(repr.substring(left)));
-                    case IN_BOOLEAN: return Node.Bool(Boolean.valueOf(repr.substring(left)));
-                    case IN_STRING:  return Node.Str (repr.substring(left).substring(1, repr.length()-1).replace("\\\"", "\"").replace("\\\\", "\\\\"));
-                    default: throw new RuntimeException("invalid");
+                    case IN_NUMBER :
+                        if (!nodeStack.isEmpty()) throw new RuntimeException("parent not closed");
+                        return Node.Int (Long   .valueOf(repr.substring(left)));
+                    case IN_BOOLEAN:
+                        if (!nodeStack.isEmpty()) throw new RuntimeException("parent not closed");
+                        return Node.Bool(Boolean.valueOf(repr.substring(left)));
+                    case IN_STRING:
+                        if (!nodeStack.isEmpty()) throw new RuntimeException("parent not closed");
+                        return Node.Str (repr.substring(left).substring(1, repr.length()-1).replace("\\\"", "\"").replace("\\\\", "\\\\"));
                 }
+                if (nodeStack.isEmpty()) throw new RuntimeException("invalid");
+                return nodeStack.removeLast();
             }
             char c = repr.charAt(i);
             System.out.printf("%s: %s\n", i, c);
             switch (state) {
-                case INIT:
-                    left = i;
-                    i++;
+                case BEFORE:
                     if (digits.contains(c)) {
                         state = State.IN_NUMBER;
                     }
@@ -57,10 +83,12 @@ public class Parser {
                         state = State.IN_STRING;
                     }
                     else if (c == '[') {
-                        state = State.IN_ARRAY;
+                        nodeStack.add(Node.List());
+                        state = State.BEFORE;
                     }
                     else if (c == '{') {
-                        state = State.IN_OBJECT;
+                        nodeStack.add(Node.Map());
+                        state = State.BEFORE;
                     }
                     else if (ws.contains(c)) {
                         /*pass*/
@@ -68,20 +96,16 @@ public class Parser {
                     else {
                         throw new RuntimeException("invalid starting character "+c);
                     }
+                    left = i;
+                    i++;
                     break;
                 case IN_NUMBER:
                     if (digits.contains(c)) {
                         i++;
                     }
                     else {
-                        int k = i;
-                        while (i < repr.length()) {
-                            if (!ws.contains(repr.charAt(i))) {
-                                throw new RuntimeException("looks like a number but invalid");
-                            }
-                            i++;
-                        }
-                        return Node.Int(Long.valueOf(repr.substring(left, k)));
+                        handleNode(Node.Int(Long.valueOf(repr.substring(left, i))));
+                        state = State.AFTER;
                     }
                     break;
                 case IN_BOOLEAN:
@@ -89,15 +113,48 @@ public class Parser {
                         i++;
                     }
                     else {
-                        int k = i;
-                        while (i < repr.length()) {
-                            if (!ws.contains(repr.charAt(i))) {
-                                throw new RuntimeException("looks like a bool but invalid");
-                            }
-                            i++;
-                        }
-                        return Node.Bool(Boolean.valueOf(repr.substring(left, k)));
+                        nodeStack.add(Node.Bool(Boolean.valueOf(repr.substring(left, i))));
+                        state = State.AFTER;
                     }
+                    break;
+                case IN_STRING:
+                    if (c == '\\') {
+                        i++;
+                        state = State.IN_STRING_ESCAPING;
+                    }
+                    else if (c != '"') {
+                        i++;
+                    }
+                    else {
+                        nodeStack.add(Node.Bool(Boolean.valueOf(repr.substring(left, i))));
+                        state = State.AFTER;
+                    }
+                    break;
+                case IN_STRING_ESCAPING:
+                    i++;
+                    break;
+                case AFTER:
+                    if (ws.contains(c)) {
+                        /*pass*/
+                    }
+                    else if (c == ',') {
+                        state = State.BEFORE;
+                    }
+                    else if (c == ']') {
+                        Node parent = nodeStack.removeLast();
+                        if (parent.type() != Node.Type.LIST) throw new RuntimeException("bad array closing character "+c);
+                        handleNode(parent);
+                        /* keep state */
+                    }
+                    else if (c == '}') {
+                        Node parent = nodeStack.removeLast();
+                        if (parent.type() != Node.Type.MAP) throw new RuntimeException("bad object closing character "+c);
+                        handleNode(parent);
+                        /* keep state */
+                    }
+                    else throw new RuntimeException("invalid character "+c+" after value");
+                    left = i;
+                    i++;
                     break;
                 default:
                     throw new RuntimeException("invalid");
