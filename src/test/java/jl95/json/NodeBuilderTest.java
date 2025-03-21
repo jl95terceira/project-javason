@@ -140,6 +140,6 @@ public class NodeBuilderTest {
             ))),
             entry("true", Node.Bool(false))
         ));
-        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("{\"aaa\":\"zzz\", \"000\":123, \"something\":{\"in the way\":[null, 42],\"she\":\"knows\"} ,\"true\":false}").asList());
+        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("{ \r\n\"aaa\":\"zzz\", \"000\":123, \n\"something\":{\"in the way\":\n\n\r\t[null, 42],\"she\":\"knows\"} ,\"true\":false}").asList());
     }
 }
