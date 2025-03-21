@@ -21,6 +21,7 @@ public abstract class Builder<N> {
                 addToArray(parent, x);
             } else {
                 addToObject(parent, entryKey, x);
+                entryKey = null;
             }
         }
         if (isArrayOrObject(x)) {

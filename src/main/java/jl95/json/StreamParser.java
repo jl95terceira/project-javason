@@ -156,7 +156,7 @@ public class StreamParser {
                     else if (ws.contains(c)) {
                         /*pass*/
                     }
-                    else if (c == ']' || c == '}') {
+                    else if (c == ']') {
                         state = State.AFTER_VALUE;
                         continue;
                     }
@@ -246,6 +246,10 @@ public class StreamParser {
                     else if (c == '"') {
                         state = State.IN_STRING;
                         stateInObjectKey = true;
+                    }
+                    else if (c == '}') {
+                        state = State.AFTER_VALUE;
+                        continue;
                     }
                     left = i;
                     i++;

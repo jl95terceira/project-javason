@@ -1,9 +1,10 @@
 package jl95.json;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NodeBuilderTest {
 
@@ -11,8 +12,23 @@ public class NodeBuilderTest {
         list.addAll(Arrays.asList(elements));
         return list;
     }
-    private static <T> ArrayList<T>         toArrayList(T... elements) {
+    private static <T> ArrayList<T> toArrayList(T... elements) {
         return toList(new ArrayList<>(elements.length), elements);
+    }
+    private static class Entry<K, V> {
+        public final K key;
+        public final V value;
+        public Entry(K key, V value) {this.key = key; this.value = value;}
+    }
+    private static <K, V> Entry<K, V> entry(K key, V value) {return new Entry<>(key, value);}
+    private static <K, V, M extends Map<K, V>> M toMap(M map, Entry<K, V>... entries) {
+        for (Entry<K, V> e: entries) {
+            map.put(e.key, e.value);
+        }
+        return map;
+    }
+    private static <K, V> HashMap<K, V> toHashMap(Entry<K, V>... elements) {
+        return toMap(new HashMap<>(elements.length), elements);
     }
 
     @org.junit.Test
@@ -71,12 +87,12 @@ public class NodeBuilderTest {
     }
     @org.junit.Test
     public void testArray() {
-        Node array = Node.List(toList(new ArrayList<>(),
+        Node array = Node.List(toArrayList(
             Node.Str("abc"),
             Node.Int(123),
             Node.Bool(true)
         ));
-        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("[\"abc\"        ,          123,true ]").asList());
+        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build(" [\"abc\"        ,          123,true ]  ").asList());
         org.junit.Assert.assertNotEquals(array.asList(), NodeBuilder.build("[\"abc\",321,true]").asList());
     }
     @org.junit.Test
@@ -95,5 +111,35 @@ public class NodeBuilderTest {
         ));
         org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("[\"abc\", 123, [[null, 42],\"hello\\\\there\"] ,true]").asList());
         org.junit.Assert.assertNotEquals(array.asList(), NodeBuilder.build("[\"abc\", 123, [[null, 42],\"hello\\\\world\"] ,true]").asList());
+    }
+    @org.junit.Test
+    public void testObjectEmpty() {
+        org.junit.Assert.assertEquals(Node.Map().asMap(), NodeBuilder.build("{}").asMap());
+    }
+    @org.junit.Test
+    public void testObject() {
+        Node array = Node.Map(toHashMap(
+            entry("foo", Node.Str("bar")),
+            entry("answer", Node.Int(42)),
+            entry("I'm awesome", Node.Bool(true))
+        ));
+        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("  {  \"foo\":\"bar\"        ,          \"answer\":42,\"I'm awesome\":true } ").asList());
+        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("  {  \"foo\":\"bar\"        ,          \"answer\":42,\"I'm awesome\":false } ").asList());
+    }
+    @org.junit.Test
+    public void testObjectNested() {
+        Node array = Node.Map(toHashMap(
+            entry("aaa", Node.Str("zzz")),
+            entry("000", Node.Int(123)),
+            entry("something", Node.Map(toHashMap(
+                entry("in the way", Node.List(toArrayList(
+                    Node.Null(),
+                    Node.Int(42)
+                ))),
+                entry("she", Node.Str("knows"))
+            ))),
+            entry("true", Node.Bool(false))
+        ));
+        org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("{\"aaa\":\"zzz\", \"000\":123, \"something\":{\"in the way\":[null, 42],\"she\":\"knows\"} ,\"true\":false}").asList());
     }
 }
