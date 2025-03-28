@@ -12,7 +12,6 @@ public abstract class Builder<N> {
         N getString(String s);
         N getArray ();
         N getObject();
-        Boolean isArrayOrObject(N x);
         void addToArray (N array,            N v);
         void addToObject(N object, String k, N v);
     }
@@ -28,7 +27,7 @@ public abstract class Builder<N> {
         this.b    = getBuildMethods();
     }
 
-    private void handleValue(N x) {
+    private void handleValue(N x, Boolean isArrayOrObject) {
         if (root == null) {
             root = x;
         }
@@ -41,7 +40,7 @@ public abstract class Builder<N> {
                 entryKey = null;
             }
         }
-        if (b.isArrayOrObject(x)) {
+        if (isArrayOrObject) {
             stack.add(x);
         }
     }
@@ -51,28 +50,28 @@ public abstract class Builder<N> {
         new StreamParser().parse(repr, new StreamParser.Handlers() {
 
             @Override public void handleNull        () {
-                handleValue(b.getNull());
+                handleValue(b.getNull(), false);
             }
             @Override public void handleNumber      (String nRepr) {
-                handleValue(b.getNumber(nRepr));
+                handleValue(b.getNumber(nRepr), false);
             }
             @Override public void handleString      (String s) {
-                handleValue(b.getString(s));
+                handleValue(b.getString(s), false);
             }
             @Override public void handleTrue        () {
-                handleValue(b.getTrue());
+                handleValue(b.getTrue(), false);
             }
             @Override public void handleFalse       () {
-                handleValue(b.getFalse());
+                handleValue(b.getFalse(), false);
             }
             @Override public void handleArrayStart  () {
-                handleValue(b.getArray());
+                handleValue(b.getArray(), true);
             }
             @Override public void handleArrayEnd    () {
                 stack.removeLast();
             }
             @Override public void handleObjectStart () {
-                handleValue(b.getObject());
+                handleValue(b.getObject(), true);
             }
             @Override public void handleObjectEnd   () {
                 stack.removeLast();

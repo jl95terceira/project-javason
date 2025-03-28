@@ -40,15 +40,6 @@ public class NodeBuilder extends Builder<Node> {
                 return Node.Map();
             }
             @Override
-            public Boolean isArrayOrObject(Node x) {
-                switch (x.type()) {
-                case LIST:
-                case MAP:
-                    return true;
-                }
-                return false;
-            }
-            @Override
             public void addToArray(Node array, Node v) {
                 array.add(v);
             }
