@@ -4,14 +4,15 @@ import java.util.*;
 
 public class Node {
 
-    public static enum  Type {
+    public enum Type {
         
-        NULL, INT, BOOL, STR, LIST, MAP
+        NULL, LONG, DOUBLE, BOOL, STRING, LIST, MAP
     }
     
     // All attributes are public because Drools. (Don't ask.)
     public Type              _type = Type.NULL;
     public Long              _int  = null;
+    public Double            _float= null;
     public Boolean           _bool = null;
     public String            _str  = null;
     public List<Node>        _list = null;
@@ -24,68 +25,73 @@ public class Node {
         return a;
     }
             
-    public static Node Null()             { Node a = _Node(Type.NULL);              return a; }
-    public static Node Int (Long       x) { Node a = _Node(Type.INT);  a._int  = x; return a; }
-    public static Node Int (Integer    x) { return Int(x.longValue()); }
-    public static Node Int (Short      x) { return Int(x.longValue()); }
-    public static Node Int (Byte       x) { return Int(x.longValue()); }
-    public static Node Bool(Boolean    x) { Node  a = _Node(Type.BOOL); a._bool = x; return a; }
-    public static Node Str (String     x) { Node  a = _Node(Type.STR);  a._str  = x; return a; }
-    public static Node Str (Long       x) { return Str(Long   .toString(x)); }
-    public static Node Str (Integer    x) { return Str(Integer.toString(x)); }
-    public static Node Str (Short      x) { return Str(Short  .toString(x)); }
-    public static Node Str (Byte       x) { return Str(Byte   .toString(x)); }
-    public static Node List()             { return Node.List(new ArrayList<>()); }
-    public static Node List(List<Node> x) { Node a = _Node(Type.LIST); a._list = x; return a; }
-    public static Node Map ()             { return Node.Map (new HashMap<>()); }
-    public static Node Map (Map<String, 
-                             Node>     x) { Node a = _Node(Type.MAP);  a._map  = x; return a; }
+    public static Node Null  ()             { return _Node(Type.NULL); }
+    public static Node Long  (Long       x) { Node a = _Node(Type.LONG);  a._int  = x; return a; }
+    public static Node Long  (Integer    x) { return Long(x.longValue()); }
+    public static Node Long  (Short      x) { return Long(x.longValue()); }
+    public static Node Long  (Byte       x) { return Long(x.longValue()); }
+    public static Node Double(Double     x) { Node a = _Node(Type.DOUBLE);  a._float  = x; return a; }
+    public static Node Double(Float      x) { return Double(x.doubleValue()); }
+    public static Node Bool  (Boolean    x) { Node  a = _Node(Type.BOOL); a._bool = x; return a; }
+    public static Node String(String     x) { Node  a = _Node(Type.STRING);  a._str  = x; return a; }
+    public static Node String(Long       x) { return String(Long   .toString(x)); }
+    public static Node String(Integer    x) { return String(Integer.toString(x)); }
+    public static Node String(Short      x) { return String(Short  .toString(x)); }
+    public static Node String(Byte       x) { return String(Byte   .toString(x)); }
+    public static Node String(Double     x) { return String(Double .toString(x)); }
+    public static Node String(Float      x) { return String(Float  .toString(x)); }
+    public static Node List  ()             { return Node.List(new ArrayList<>()); }
+    public static Node List  (List<Node> x) { Node a = _Node(Type.LIST); a._list = x; return a; }
+    public static Node Map   ()             { return Node.Map (new HashMap<>()); }
+    public static Node Map   (Map<String, Node> x) { Node a = _Node(Type.MAP);  a._map  = x; return a; }
     
     public Node() {}
     
-    public Type              type    () { return _type; }
-    public Long              asInt   () { return _int; }
-    public Boolean           asBool  () { return _bool; }
-    public String            asStr   () { return _str; }
-    public List<Node>        asList  () { return _list; }
-    public Map<String, Node> asMap   () { return _map; }
-    public Object            asObj   () {
+    public Type              type     () { return _type; }
+    public Long              asLong   () { return _int; }
+    public Double            asDouble () { return _float; }
+    public Boolean           asBoolean() { return _bool; }
+    public String            asString () { return _str; }
+    public List<Node>        asList   () { return _list; }
+    public Map<String, Node> asMap    () { return _map; }
+    public Object            asObject () {
         
         switch (type()) {
             
-            case NULL: return null;
-            case INT : return asInt();
-            case BOOL: return asBool();
-            case STR : return asStr();
-            case LIST: return asList();
-            case MAP : return asMap();
-            default  : throw new AssertionError("not switching through all cases of type");
+            case NULL : return null;
+            case LONG: return asLong();
+            case DOUBLE: return asDouble();
+            case BOOL : return asBoolean();
+            case STRING: return asString();
+            case LIST : return asList();
+            case MAP  : return asMap();
+            default   : throw new AssertionError("not switching through all cases of type");
         }
     }
-    public Node              get     (Integer i)         { return _list.get(i); }
-    public void              set     (Integer i,
-                                      Node    x)         { _list.set(i, x); }
-    public void              add     (Node    x)         { _list.add   (x); }
-    public Node              getItem (String  i)         { return _map .get(i); }
-    public Node              getItem (Integer i)         { return getItem(i.toString()); }
-    public Node              getItem (Long    i)         { return getItem(i.toString()); }
-    public void              setItem (String  i, Node x) { _map .put(i, x); }
-    public void              setItem (Integer i, Node x) { setItem (i.toString(), x); }
-    public void              setItem (Long    i, Node x) { setItem (i.toString(), x); }
+    public Node              get    (Integer i)         { return _list.get(i); }
+    public void              set    (Integer i, Node x) { _list.set(i, x); }
+    public void              add    (Node    x)         { _list.add   (x); }
+    public Node              getItem(String  i)         { return _map .get(i); }
+    public Node              getItem(Integer i)         { return getItem(i.toString()); }
+    public Node              getItem(Long    i)         { return getItem(i.toString()); }
+    public void              setItem(String  i, Node x) { _map .put(i, x); }
+    public void              setItem(Integer i, Node x) { setItem (i.toString(), x); }
+    public void              setItem(Long    i, Node x) { setItem (i.toString(), x); }
     public Node              copy    () {
         
         switch (type()) {
             
-            case NULL: return Null();
-            case INT : return Int (asInt ());
-            case BOOL: return Bool(asBool());
-            case STR : return Str (asStr ());
-            case LIST: return List(asList());
-            case MAP : return Map (asMap ());
+            case NULL  : return Null  ();
+            case LONG  : return Long  (asLong  ());
+            case DOUBLE: return Double(asDouble());
+            case BOOL  : return Bool  (asBoolean());
+            case STRING: return String(asString());
+            case LIST  : return List  (asList  ());
+            case MAP   : return Map   (asMap   ());
             default: throw new AssertionError("not switching through all cases of type");
         }
     }
-    public Node              deepcopy() {
+    public Node              deepCopy() {
         
         switch (type()) {
             
@@ -94,7 +100,7 @@ public class Node {
                 List<Node> l = new java.util.ArrayList<>(asList().size());
                 for (Node x: asList()) {
                     
-                    l.add(x.deepcopy());
+                    l.add(x.deepCopy());
                 }
                 return Node.List(l);
                 
@@ -103,7 +109,7 @@ public class Node {
                 Map<String,Node> m = new java.util.HashMap<>(asMap().size());
                 for (Map.Entry<String,Node> x: asMap().entrySet()) {
                     
-                    m.put(x.getKey(), x.getValue().deepcopy());
+                    m.put(x.getKey(), x.getValue().deepCopy());
                 }
                 return Node.Map(m);
                 
@@ -113,7 +119,7 @@ public class Node {
     
     @Override public String  toString() {
         
-        return String.format("Node(%s)", asObj());
+        return String.format("Node(%s)", asObject());
     }
     @Override public boolean equals  (Object o) {
         if (this == o)
@@ -122,9 +128,9 @@ public class Node {
             return false;
         Node node = (Node) o;
         return type() == node.type() &&
-               Objects.equals(asObj(), node.asObj());
+               Objects.equals(asObject(), node.asObject());
     }
-    @Override public int hashCode() {
-        return Objects.hash(type(), asObj());
+    @Override public int     hashCode() {
+        return Objects.hash(type(), asObject());
     }
 }

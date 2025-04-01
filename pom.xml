@@ -15,6 +15,5 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>8</maven.compiler.release>
-        <exec.mainClass>io.github.jl95terceira.project.javason.ProjectJavason</exec.mainClass>
     </properties>
 </project>

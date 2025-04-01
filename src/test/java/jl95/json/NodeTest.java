@@ -29,20 +29,26 @@ public class NodeTest {
         Assert.assertEquals   (Node.Bool(false), Node.Bool(false));
     }
     @org.junit.Test
-    public void testInt() {
-        Assert.assertEquals   (Node.Int(123), Node.Int(123));
-        Assert.assertNotEquals(Node.Int(123), Node.Int(42));
-        Assert.assertNotEquals(Node.Int(123), Node.Bool(true));
+    public void testLong() {
+        Assert.assertEquals   (Node.Long(123), Node.Long(123));
+        Assert.assertNotEquals(Node.Long(123), Node.Long(42));
+        Assert.assertNotEquals(Node.Long(123), Node.Bool(true));
+    }
+    @org.junit.Test
+    public void testDouble() {
+        Assert.assertEquals   (Node.Double(1.23), Node.Double(1.23));
+        Assert.assertNotEquals(Node.Double(1.23), Node.Double(1.24));
+        Assert.assertNotEquals(Node.Double(1.23), Node.Bool  (true));
     }
     @org.junit.Test
     public void testString() {
-        Assert.assertEquals   (Node.Str("hello"), Node.Str("hello"));
-        Assert.assertNotEquals(Node.Str("hello"), Node.Str("world"));
-        Assert.assertNotEquals(Node.Str("hello"), Node.Int(1234));
-        Assert.assertNotEquals(Node.Str("hello"), Node.Bool(false));
+        Assert.assertEquals   (Node.String("hello"), Node.String("hello"));
+        Assert.assertNotEquals(Node.String("hello"), Node.String("world"));
+        Assert.assertNotEquals(Node.String("hello"), Node.Long(1234));
+        Assert.assertNotEquals(Node.String("hello"), Node.Bool(false));
     }
     private List<Node> makeList(Integer salt) {
-        return listOf(Node.Bool(true), Node.Int(123+salt), Node.Str("universe"));
+        return listOf(Node.Bool(true), Node.Long(123+salt), Node.String("universe"));
     }
     @org.junit.Test
     public void testList() {
@@ -54,8 +60,8 @@ public class NodeTest {
     private Map<String,Node> makeMap(String salt) {
         return mapOf(
                 Entry.of("abc",    Node.Bool(false)),
-                Entry.of("answer", Node.Int(42)),
-                Entry.of("nested", Node.List(listOf(Node.Str("eggs"+salt), Node.Null())))
+                Entry.of("answer", Node.Long(42)),
+                Entry.of("nested", Node.List(listOf(Node.String("eggs"+salt), Node.Null())))
         );
     }
     @org.junit.Test

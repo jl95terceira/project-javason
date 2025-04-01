@@ -33,12 +33,14 @@ public class NodeBuilderTest {
 
     @org.junit.Test
     public void testNumber() {
-        org.junit.Assert.assertEquals   (Node.Int(4242).asInt(), NodeBuilder.build("4242").asInt());
-        org.junit.Assert.assertNotEquals(Node.Int(4242).asInt(), NodeBuilder.build("2424").asInt());
+        org.junit.Assert.assertEquals   (Node.Long(4242).asLong(), NodeBuilder.build("4242").asLong());
+        org.junit.Assert.assertNotEquals(Node.Long(4242).asLong(), NodeBuilder.build("2424").asLong());
+        org.junit.Assert.assertEquals   (Node.Double(42.42).asDouble(), NodeBuilder.build("42.42").asDouble());
+        org.junit.Assert.assertNotEquals(Node.Double(42.42).asDouble(), NodeBuilder.build("24.24").asDouble());
     }
     @org.junit.Test
     public void testNumberPadded() {
-        org.junit.Assert.assertEquals   (Node.Int(4242).asInt(), NodeBuilder.build("     4242    ").asInt());
+        org.junit.Assert.assertEquals   (Node.Long(4242).asLong(), NodeBuilder.build("     4242    ").asLong());
         try {
             NodeBuilder.build("42  42");
             org.junit.Assert.fail("should not be able to parse \"42 42\"");
@@ -47,13 +49,13 @@ public class NodeBuilderTest {
     }
     @org.junit.Test
     public void testBoolean() {
-        org.junit.Assert.assertEquals   (Node.Bool(true) .asBool(), NodeBuilder.build("true") .asBool());
-        org.junit.Assert.assertNotEquals(Node.Bool(true) .asBool(), NodeBuilder.build("false").asBool());
-        org.junit.Assert.assertEquals   (Node.Bool(false).asBool(), NodeBuilder.build("false").asBool());
+        org.junit.Assert.assertEquals   (Node.Bool(true) .asBoolean(), NodeBuilder.build("true") .asBoolean());
+        org.junit.Assert.assertNotEquals(Node.Bool(true) .asBoolean(), NodeBuilder.build("false").asBoolean());
+        org.junit.Assert.assertEquals   (Node.Bool(false).asBoolean(), NodeBuilder.build("false").asBoolean());
     }
     @org.junit.Test
     public void testBooleanPadded() {
-        org.junit.Assert.assertEquals   (Node.Bool(true) .asBool(), NodeBuilder.build("     true    ").asBool());
+        org.junit.Assert.assertEquals   (Node.Bool(true) .asBoolean(), NodeBuilder.build("     true    ").asBoolean());
         try {
             NodeBuilder.build("tr  ue");
             org.junit.Assert.fail("should not be able to parse \"tr ue\"");
@@ -62,11 +64,11 @@ public class NodeBuilderTest {
     }
     @org.junit.Test
     public void testString() {
-        org.junit.Assert.assertEquals   (Node.Str("foobar") .asStr(), NodeBuilder.build("\"foobar\"").asStr());
-        org.junit.Assert.assertNotEquals(Node.Str("foobar") .asStr(), NodeBuilder.build("\"barfoo\"").asStr());
-        org.junit.Assert.assertEquals   (Node.Str("foo\\bar") .asStr(), NodeBuilder.build("\"foo\\\\bar\"").asStr());
-        org.junit.Assert.assertEquals   (Node.Str("foo\"bar") .asStr(), NodeBuilder.build("\"foo\\\"bar\"").asStr());
-        org.junit.Assert.assertEquals   (Node.Str("foo\bbar") .asStr(), NodeBuilder.build("\"foo\\bbar\"").asStr());
+        org.junit.Assert.assertEquals   (Node.String("foobar")  .asString(), NodeBuilder.build("\"foobar\"")    .asString());
+        org.junit.Assert.assertNotEquals(Node.String("foobar")  .asString(), NodeBuilder.build("\"barfoo\"")    .asString());
+        org.junit.Assert.assertEquals   (Node.String("foo\\bar").asString(), NodeBuilder.build("\"foo\\\\bar\"").asString());
+        org.junit.Assert.assertEquals   (Node.String("foo\"bar").asString(), NodeBuilder.build("\"foo\\\"bar\"").asString());
+        org.junit.Assert.assertEquals   (Node.String("foo\bbar").asString(), NodeBuilder.build("\"foo\\bbar\"") .asString());
         for (String repr: new String[] {
             "\"foo\"bar\"",
             "\"foo\\xar\""
@@ -79,7 +81,7 @@ public class NodeBuilderTest {
     }
     @org.junit.Test
     public void testStringPadded() {
-        org.junit.Assert.assertEquals   (Node.Str("foobar") .asStr(), NodeBuilder.build("     \"foobar\"     ").asStr());
+        org.junit.Assert.assertEquals   (Node.String("foobar") .asString(), NodeBuilder.build("     \"foobar\"     ").asString());
     }
     @org.junit.Test
     public void testArrayEmpty() {
@@ -88,8 +90,8 @@ public class NodeBuilderTest {
     @org.junit.Test
     public void testArray() {
         Node array = Node.List(toArrayList(
-            Node.Str("abc"),
-            Node.Int(123),
+            Node.String("abc"),
+            Node.Long(123),
             Node.Bool(true)
         ));
         org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build(" [\"abc\"        ,          123,true ]  ").asList());
@@ -98,14 +100,14 @@ public class NodeBuilderTest {
     @org.junit.Test
     public void testArrayNested() {
         Node array = Node.List(toArrayList(
-            Node.Str("abc"),
-            Node.Int(123),
+            Node.String("abc"),
+            Node.Long(123),
             Node.List(toArrayList(
                 Node.List(toArrayList(
                     Node.Null(),
-                    Node.Int(42)
+                    Node.Long(42)
                 )),
-                Node.Str("hello\\there")
+                Node.String("hello\\there")
             )),
             Node.Bool(true)
         ));
@@ -119,8 +121,8 @@ public class NodeBuilderTest {
     @org.junit.Test
     public void testObject() {
         Node array = Node.Map(toHashMap(
-            entry("foo", Node.Str("bar")),
-            entry("answer", Node.Int(42)),
+            entry("foo", Node.String("bar")),
+            entry("answer", Node.Long(42)),
             entry("I'm awesome", Node.Bool(true))
         ));
         org.junit.Assert.assertEquals   (array.asList(), NodeBuilder.build("  {  \"foo\":\"bar\"        ,          \"answer\":42,\"I'm awesome\":true } ").asList());
@@ -129,14 +131,14 @@ public class NodeBuilderTest {
     @org.junit.Test
     public void testObjectNested() {
         Node array = Node.Map(toHashMap(
-            entry("aaa", Node.Str("zzz")),
-            entry("000", Node.Int(123)),
+            entry("aaa", Node.String("zzz")),
+            entry("000", Node.Long(123)),
             entry("something", Node.Map(toHashMap(
                 entry("in the way", Node.List(toArrayList(
                     Node.Null(),
-                    Node.Int(42)
+                    Node.Long(42)
                 ))),
-                entry("she", Node.Str("knows"))
+                entry("she", Node.String("knows"))
             ))),
             entry("true", Node.Bool(false))
         ));

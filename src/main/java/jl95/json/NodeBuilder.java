@@ -25,11 +25,11 @@ public class NodeBuilder extends Builder<Node> {
             }
             @Override
             public Node getNumber(String numberRepr) {
-                return Node.Int(Long.valueOf(numberRepr));
+                return !numberRepr.contains(".")? Node.Long(Long.valueOf(numberRepr)): Node.Double(Double.valueOf(numberRepr));
             }
             @Override
             public Node getString(String s) {
-                return Node.Str(s);
+                return Node.String(s);
             }
             @Override
             public Node getArray() {
