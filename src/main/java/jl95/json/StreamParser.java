@@ -1,6 +1,5 @@
 package jl95.json;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -10,6 +9,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * A JSON stream-parser.
+ * A stream-parser works not by parsing a serial (e.g. JSON) into an equivalent object (e.g. a Java object)
+ * but rather by calling back given "handler" functions according to the types of the (JSON) elements that it finds during parsing.
+ * Applications may set the handlers to build an equivalent (Java) object containing the whole serial or they
+ * may process the (JSON) elements on the fly - much more efficient if we want to parse into a specialized class / struct.
+ */
 public class StreamParser {
 
     private static class EscapableCharMapping {
@@ -25,18 +31,19 @@ public class StreamParser {
             this.toAsString     = ""     +to;
         }
     }
-
-    public interface Handlers {
-        void handleNull       ();
-        void handleNumber     (String  nRepr);
-        void handleString     (String  s);
-        void handleTrue       ();
-        void handleFalse      ();
-        void handleArrayStart ();
-        void handleArrayEnd   ();
-        void handleObjectStart();
-        void handleObjectEnd  ();
-        void handleObjectKey  (String k);
+    private        enum  State {
+        BEFORE_VALUE,
+        IN_NUMBER,
+        IN_WORD,
+        IN_STRING,
+        IN_STRING_ESCAPING,
+        AFTER_VALUE,
+        BEFORE_KEY,
+        AFTER_KEY;
+    }
+    private        enum  StackValue {
+        ARRAY,
+        OBJECT;
     }
 
     private static <T> Set <T> setOf (T... elements) {
@@ -68,21 +75,6 @@ public class StreamParser {
     );
     private static Set<Character>  escapableChars = escapableCharMappings.stream().map(esc -> esc.from).collect(Collectors.toSet());
 
-    private enum State {
-        BEFORE_VALUE,
-        IN_NUMBER,
-        IN_WORD,
-        IN_STRING,
-        IN_STRING_ESCAPING,
-        AFTER_VALUE,
-        BEFORE_KEY,
-        AFTER_KEY;
-    }
-    private enum StackValue {
-        ARRAY,
-        OBJECT;
-    }
-
     private Handlers handlers;
 
     private String resolveStringWithinQuotes(String reprWithinQuotes) {
@@ -101,7 +93,28 @@ public class StreamParser {
         else throw new RuntimeException("invalid word "+word);
     }
 
-    public void parse(String repr, Handlers handlers) {
+    /**
+     * handlers for JSON elements of the various types
+     */
+    public interface Handlers {
+        void handleNull       ();
+        void handleNumber     (String  nRepr);
+        void handleString     (String  s);
+        void handleTrue       ();
+        void handleFalse      ();
+        void handleArrayStart ();
+        void handleArrayEnd   ();
+        void handleObjectStart();
+        void handleObjectEnd  ();
+        void handleObjectKey  (String k);
+    }
+
+    /**
+     * parse a whole JSON serial
+     * @param serial JSON serial
+     * @param handlers handlers
+     */
+    public void parse(String serial, Handlers handlers) {
         State state = State.BEFORE_VALUE;
         Boolean stateInObjectKey = false;
         LinkedList<StackValue> stack = new LinkedList<>();
@@ -110,24 +123,24 @@ public class StreamParser {
         int i = 0;
         while (true) {
 //            System.out.printf("%s :: %s\n", state, i);
-            if (i >= repr.length()) {
+            if (i >= serial.length()) {
                 if (state == State.AFTER_VALUE) {
                     break;
                 }
                 if (!stack.isEmpty()) throw new RuntimeException("did not close parent");
                 switch (state) {
                     case IN_NUMBER:
-                        handlers.handleNumber(repr.substring(left));
+                        handlers.handleNumber(serial.substring(left));
                         break;
                     case IN_WORD:
-                        handleWord(repr.substring(left));
+                        handleWord(serial.substring(left));
                         break;
                     default:
                         throw new RuntimeException("invalid");
                 }
                 break;
             }
-            char c = repr.charAt(i);
+            char c = serial.charAt(i);
 //            System.out.printf("    %s\n", c);
             switch (state) {
                 case BEFORE_VALUE:
@@ -169,7 +182,7 @@ public class StreamParser {
                         i++;
                     }
                     else {
-                        handlers.handleNumber(repr.substring(left, i));
+                        handlers.handleNumber(serial.substring(left, i));
                         state = State.AFTER_VALUE;
                     }
                     break;
@@ -178,7 +191,7 @@ public class StreamParser {
                         i++;
                     }
                     else {
-                        handleWord(repr.substring(left, i));
+                        handleWord(serial.substring(left, i));
                         state = State.AFTER_VALUE;
                     }
                     break;
@@ -191,7 +204,7 @@ public class StreamParser {
                         i++;
                     }
                     else {
-                        String s = resolveStringWithinQuotes(repr.substring(left +1, i));
+                        String s = resolveStringWithinQuotes(serial.substring(left +1, i));
                         if (!stateInObjectKey) {
                             handlers.handleString(s);
                             state = State.AFTER_VALUE;

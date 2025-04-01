@@ -3,10 +3,10 @@ package jl95.json;
 public class NodeBuilder extends Builder<Node> {
 
     public static Node build(String repr) {
-        return new NodeBuilder(repr).build();
+        return new NodeBuilder()._build(repr);
     }
 
-    private NodeBuilder(String repr) {super(repr);}
+    private NodeBuilder() {super();}
 
     @Override
     protected BuildMethods<Node> getBuildMethods() {
